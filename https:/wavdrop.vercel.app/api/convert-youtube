@@ -1,1 +1,38 @@
-https://wavdrop.vercel.app/api/convert-youtube
+import { exec } from 'child_process';
+import { writeFileSync } from 'fs';
+import ffmpegPath from 'ffmpeg-static';
+import path from 'path';
+import { parseFile } from 'music-metadata';
+import ytdlp from 'yt-dlp-exec';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  const { url } = req.body;
+  if (!url) return res.status(400).send('Missing YouTube URL');
+
+  const filename = 'track.wav';
+  const filepath = `/tmp/${filename}`;
+
+  try {
+    await ytdlp(url, {
+      output: '/tmp/input.%(ext)s',
+      extractAudio: true,
+      audioFormat: 'wav',
+      ffmpegLocation: ffmpegPath,
+    });
+
+    const metadata = await parseFile(filepath);
+    const { duration, bitrate, sampleRate } = metadata.format;
+
+    res.status(200).json({
+      title: metadata.common.title || 'Untitled Track',
+      duration,
+      bitrate,
+      sampleRate,
+      filename,
+      downloadUrl: `https://${req.headers.host}/files/${filename}`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
