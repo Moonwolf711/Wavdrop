@@ -1,0 +1,15 @@
+@echo off
+set /p YT_URL="Paste YouTube URL: "
+
+:: Make directories
+mkdir "%USERPROFILE%\WaveDrop\Imports"
+mkdir "%USERPROFILE%\WaveDrop\yt-dlp"
+
+:: Download and convert using yt-dlp
+yt-dlp.exe -x --audio-format wav --audio-quality 0 ^
+-o "%USERPROFILE%\WaveDrop\Imports\%%(title)s.%%(ext)s" %YT_URL%
+
+:: Copy to iTunes (optional)
+copy "%USERPROFILE%\WaveDrop\Imports\*.wav" "%USERPROFILE%\Music\iTunes\iTunes Media\Automatically Add to iTunes\"
+
+pause
